@@ -52,9 +52,9 @@ function StatusBadge({ status }: { status: string }) {
         timeout: 'bg-gray-600 text-white',
     };
     return (
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${colors[status] || 'bg-gray-200 text-gray-800'}`}>
-            {status === 'success' && <CheckCircle className="mr-1 h-4 w-4" />}
-            {status === 'failed' && <AlertCircle className="mr-1 h-4 w-4" />}
+        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold md:text-sm ${colors[status] || 'bg-gray-200 text-gray-800'}`}>
+            {status === 'success' && <CheckCircle className="mr-1 h-3.5 w-3.5 md:h-4 md:w-4" />}
+            {status === 'failed' && <AlertCircle className="mr-1 h-3.5 w-3.5 md:h-4 md:w-4" />}
             {status}
         </span>
     );
@@ -64,31 +64,32 @@ export default function PaymentShow({ payment }: PaymentShowProps) {
     return (
         <>
             <Head title={`Payment ${payment.uuid}`} />
-            <div className="flex flex-1 flex-col gap-6 p-6">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+                {/* Header */}
+                <div className="flex items-center gap-3">
                     <Link
                         href="/payments"
-                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                     >
                         <ArrowLeft className="h-4 w-4" /> Back
                     </Link>
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Payment Details</h1>
-                        <p className="mt-1 font-mono text-sm text-gray-500">{payment.uuid}</p>
+                    <div className="min-w-0">
+                        <h1 className="text-xl font-bold text-gray-900 md:text-3xl">Payment Details</h1>
+                        <p className="mt-0.5 font-mono text-xs text-gray-500 md:text-sm">{payment.uuid}</p>
                     </div>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid gap-4 lg:grid-cols-3">
                     {/* Main Info */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                            <div className="mb-4 flex items-center gap-3">
+                    <div className="space-y-4 md:space-y-6 lg:col-span-2">
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+                            <div className="mb-3 flex items-center gap-2 md:mb-4 md:gap-3">
                                 <div className="rounded-lg bg-[#8DB600] p-2">
-                                    <CreditCard className="h-5 w-5 text-white" />
+                                    <CreditCard className="h-4 w-4 text-white md:h-5 md:w-5" />
                                 </div>
-                                <h2 className="text-lg font-semibold text-gray-900">Transaction Info</h2>
+                                <h2 className="text-base font-semibold text-gray-900 md:text-lg">Transaction Info</h2>
                             </div>
-                            <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-3 sm:grid-cols-2 md:gap-4">
                                 <Field label="Status" value={<StatusBadge status={payment.status} />} />
                                 <Field label="Amount" value={`${payment.amount.toLocaleString()} ${payment.currency}`} />
                                 <Field label="MSISDN" value={payment.msisdn} />
@@ -104,16 +105,18 @@ export default function PaymentShow({ payment }: PaymentShowProps) {
                         </div>
 
                         {/* Logs */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                            <h2 className="mb-4 text-lg font-semibold text-gray-900">Event Logs</h2>
-                            <div className="space-y-3">
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+                            <h2 className="mb-3 text-base font-semibold text-gray-900 md:mb-4 md:text-lg">Event Logs</h2>
+                            <div className="space-y-2 md:space-y-3">
                                 {payment.logs.map((log) => (
-                                    <div key={log.id} className="rounded-md border border-gray-100 bg-gray-50 p-3">
-                                        <div className="flex items-center justify-between">
-                                            <span className={`inline-flex rounded px-2 py-0.5 text-xs font-semibold ${log.direction === 'outgoing' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                                {log.direction}
-                                            </span>
-                                            <span className="text-xs text-gray-500">{log.event}</span>
+                                    <div key={log.id} className="rounded-md border border-gray-100 bg-gray-50 p-2.5 md:p-3">
+                                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`inline-flex rounded px-2 py-0.5 text-xs font-semibold ${log.direction === 'outgoing' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                    {log.direction}
+                                                </span>
+                                                <span className="text-xs text-gray-500">{log.event}</span>
+                                            </div>
                                             <span className="text-xs text-gray-400">{new Date(log.created_at).toLocaleString()}</span>
                                         </div>
                                         <pre className="mt-2 overflow-x-auto rounded bg-gray-100 p-2 text-xs text-gray-700">
@@ -129,24 +132,24 @@ export default function PaymentShow({ payment }: PaymentShowProps) {
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                            <h2 className="mb-4 text-lg font-semibold text-gray-900">Merchant</h2>
-                            <div className="space-y-3">
+                    <div className="space-y-4 md:space-y-6">
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+                            <h2 className="mb-3 text-base font-semibold text-gray-900 md:mb-4 md:text-lg">Merchant</h2>
+                            <div className="space-y-2 md:space-y-3">
                                 <div>
-                                    <p className="text-sm text-gray-500">Name</p>
-                                    <p className="font-medium text-gray-900">{payment.merchant.name}</p>
+                                    <p className="text-xs text-gray-500">Name</p>
+                                    <p className="mt-0.5 text-sm font-medium text-gray-900 md:text-base">{payment.merchant.name}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-500">Email</p>
-                                    <p className="font-medium text-gray-900">{payment.merchant.email}</p>
+                                    <p className="text-xs text-gray-500">Email</p>
+                                    <p className="mt-0.5 text-sm font-medium text-gray-900 md:text-base break-all">{payment.merchant.email}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                            <h2 className="mb-4 text-lg font-semibold text-gray-900">Timeline</h2>
-                            <div className="space-y-3">
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+                            <h2 className="mb-3 text-base font-semibold text-gray-900 md:mb-4 md:text-lg">Timeline</h2>
+                            <div className="space-y-2 md:space-y-3">
                                 <TimelineItem label="Created" value={new Date(payment.created_at).toLocaleString()} />
                                 <TimelineItem label="Completed" value={payment.completed_at ? new Date(payment.completed_at).toLocaleString() : '-'} />
                                 <TimelineItem label="Callback Forwarded" value={payment.callback_forwarded_at ? new Date(payment.callback_forwarded_at).toLocaleString() : '-'} />
@@ -154,18 +157,18 @@ export default function PaymentShow({ payment }: PaymentShowProps) {
                         </div>
 
                         {payment.receipt_data && (
-                            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                                <h2 className="mb-4 text-lg font-semibold text-gray-900">Receipt</h2>
-                                <pre className="overflow-x-auto rounded bg-gray-50 p-3 text-xs text-gray-700">
+                            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+                                <h2 className="mb-3 text-base font-semibold text-gray-900 md:mb-4 md:text-lg">Receipt</h2>
+                                <pre className="overflow-x-auto rounded bg-gray-50 p-2.5 text-xs text-gray-700 md:p-3">
                                     {JSON.stringify(payment.receipt_data, null, 2)}
                                 </pre>
                             </div>
                         )}
 
                         {payment.notification_payload && (
-                            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                                <h2 className="mb-4 text-lg font-semibold text-gray-900">Notification Payload</h2>
-                                <pre className="overflow-x-auto rounded bg-gray-50 p-3 text-xs text-gray-700">
+                            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm md:p-6">
+                                <h2 className="mb-3 text-base font-semibold text-gray-900 md:mb-4 md:text-lg">Notification Payload</h2>
+                                <pre className="overflow-x-auto rounded bg-gray-50 p-2.5 text-xs text-gray-700 md:p-3">
                                     {JSON.stringify(payment.notification_payload, null, 2)}
                                 </pre>
                             </div>
@@ -181,16 +184,16 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
     return (
         <div>
             <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-            <div className="mt-1 text-sm text-gray-900">{value}</div>
+            <div className="mt-0.5 break-words text-sm text-gray-900 md:text-base">{value}</div>
         </div>
     );
 }
 
 function TimelineItem({ label, value }: { label: string; value: string }) {
     return (
-        <div className="flex justify-between">
-            <span className="text-sm text-gray-500">{label}</span>
-            <span className="text-sm font-medium text-gray-900">{value}</span>
+        <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
+            <span className="text-xs text-gray-500">{label}</span>
+            <span className="break-words text-sm font-medium text-gray-900">{value}</span>
         </div>
     );
 }
