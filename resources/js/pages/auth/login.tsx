@@ -1,7 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
+import { CreditCard } from 'lucide-react';
 import InputError from '@/components/input-error';
-import PasskeyVerify from '@/components/passkey-verify';
-import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -10,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { register } from '@/routes';
 
 type Props = {
     status?: string;
@@ -20,8 +20,6 @@ export default function Login({ status, canResetPassword }: Props) {
     return (
         <>
             <Head title="Log in" />
-
-            <PasskeyVerify />
 
             <Form
                 {...store.form()}
@@ -59,8 +57,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                         </TextLink>
                                     )}
                                 </div>
-                                <PasswordInput
+                                <Input
                                     id="password"
+                                    type="password"
                                     name="password"
                                     required
                                     tabIndex={2}
@@ -81,7 +80,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
+                                className="mt-4 w-full bg-[#8DB600] hover:bg-[#7aa500]"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
@@ -90,12 +89,19 @@ export default function Login({ status, canResetPassword }: Props) {
                                 Log in
                             </Button>
                         </div>
+
+                        <div className="text-center text-sm text-gray-500">
+                            Don't have an account?{' '}
+                            <TextLink href={register()} className="font-semibold text-[#8DB600] hover:text-[#7aa500]">
+                                Register
+                            </TextLink>
+                        </div>
                     </>
                 )}
             </Form>
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-4 text-center text-sm font-medium text-[#8DB600]">
                     {status}
                 </div>
             )}
@@ -104,6 +110,6 @@ export default function Login({ status, canResetPassword }: Props) {
 }
 
 Login.layout = {
-    title: 'Log in to your account',
+    title: 'Welcome back',
     description: 'Enter your email and password below to log in',
 };

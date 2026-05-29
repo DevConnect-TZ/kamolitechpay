@@ -1,13 +1,13 @@
-// Components
 import { Form, Head } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { login } from '@/routes';
+import { Spinner } from '@/components/ui/spinner';
 import { email } from '@/routes/password';
+import { login } from '@/routes';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     return (
@@ -15,7 +15,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
             <Head title="Forgot password" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-4 text-center text-sm font-medium text-[#8DB600]">
                     {status}
                 </div>
             )}
@@ -40,13 +40,11 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
-                                    className="w-full"
+                                    className="w-full bg-[#8DB600] hover:bg-[#7aa500]"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >
-                                    {processing && (
-                                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                                    )}
+                                    {processing && <Spinner />}
                                     Email password reset link
                                 </Button>
                             </div>
@@ -54,9 +52,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     )}
                 </Form>
 
-                <div className="space-x-1 text-center text-sm text-muted-foreground">
+                <div className="space-x-1 text-center text-sm text-gray-500">
                     <span>Or, return to</span>
-                    <TextLink href={login()}>log in</TextLink>
+                    <TextLink href={login()} className="font-semibold text-[#8DB600] hover:text-[#7aa500]">log in</TextLink>
                 </div>
             </div>
         </>

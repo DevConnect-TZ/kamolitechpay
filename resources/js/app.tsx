@@ -13,6 +13,7 @@ createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
+            case name === 'docs':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
@@ -32,9 +33,15 @@ createInertiaApp({
         );
     },
     progress: {
-        color: '#4B5563',
+        color: '#8DB600',
     },
 });
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+// Force light mode for Kamolitech Pay
+if (typeof document !== 'undefined') {
+    document.documentElement.classList.remove('dark');
+    document.documentElement.style.colorScheme = 'light';
+}
