@@ -25,14 +25,15 @@ class SelcomGatewayService
     public function pushUssd(string $transid, string $utilityref, float $amount, string $msisdn): array
     {
         $payload = [
-            'transid' => $transid,
+            'transid'    => $transid,
             'utilityref' => $utilityref,
-            'amount' => $amount,
-            'vendor' => $this->vendorId,
-            'msisdn' => $msisdn,
+            'amount'     => $amount,
+            'vendor'     => $this->vendorId,
+            'pin'        => $this->vendorPin,
+            'msisdn'     => $msisdn,
         ];
 
-        $signedFields = ['transid', 'utilityref', 'amount', 'vendor', 'msisdn'];
+        $signedFields = ['transid', 'utilityref', 'amount', 'vendor', 'pin', 'msisdn'];
         $headers = $this->buildHeaders($payload, $signedFields);
 
         $response = Http::withHeaders($headers)
