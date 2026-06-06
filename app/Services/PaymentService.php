@@ -112,13 +112,7 @@ class PaymentService
 
     public function handleWebhook(string $event, array $payload): array
     {
-        $transid = $payload['transid'] ?? null;
-        $utilityref = $payload['utilityref'] ?? null;
-
-        $payment = Payment::where('selcom_transid', $transid)
-            ->orWhere('uuid', $utilityref)
-            ->orWhere('merchant_order_id', $utilityref)
-            ->first();
+        $payment = $this->findPaymentFromSelcomPayload($payload);
 
         if (! $payment) {
             return [
@@ -158,24 +152,17 @@ class PaymentService
                 ];
             }
 
-            $resultcode = $payload['resultcode'] ?? '';
-
-            // Map Selcom result codes to internal status
-            $status = match (true) {
-                $resultcode === '000'                     => 'success',
-                in_array($resultcode, ['111', '927'])     => 'inprogress',
-                $resultcode === '999'                     => 'ambiguous',
-                default                                   => 'failed',
-            };
+            $resultcode = $this->resultCodeFromPayload($payload);
+            $status = $this->statusFromPayload($payload, $resultcode);
 
             $isTerminal = in_array($status, ['success', 'failed']);
 
             $payment->update([
                 'status'               => $status,
-                'selcom_reference'     => $payload['reference'] ?? $payment->selcom_reference,
+                'selcom_reference'     => $this->referenceFromPayload($payload) ?? $payment->selcom_reference,
                 'selcom_resultcode'    => $resultcode,
-                'selcom_result'        => $payload['result'] ?? null,
-                'selcom_message'       => $payload['message'] ?? null,
+                'selcom_result'        => $payload['result'] ?? $payload['status'] ?? $payload['payment_status'] ?? null,
+                'selcom_message'       => $payload['message'] ?? $payload['payment_status'] ?? $payload['status'] ?? null,
                 'notification_payload' => $payload,
                 'completed_at'         => $isTerminal ? now() : null,
             ]);
@@ -194,6 +181,60 @@ class PaymentService
         ];
     }
 
+    public function refreshFromSelcom(Payment $payment): Payment
+    {
+        if (! in_array($payment->status, ['pending', 'push_sent', 'inprogress', 'ambiguous'], true)) {
+            return $payment->fresh();
+        }
+
+        $this->logEvent($payment, 'status_query', 'outgoing', [
+            'order_id' => $payment->selcom_transid,
+        ]);
+
+        $response = $this->selcom->getOrderStatus($payment->selcom_transid);
+
+        $this->logEvent(
+            $payment,
+            'status_query_response',
+            'incoming',
+            $response,
+            (string) ($response['http_status'] ?? $response['status'] ?? '')
+        );
+
+        $statusPayload = $this->statusPayloadFromResponse($response);
+
+        if ($statusPayload === []) {
+            return $payment->fresh();
+        }
+
+        $resultcode = $this->resultCodeFromPayload($statusPayload);
+        $status = $this->statusFromPayload($statusPayload, $resultcode);
+
+        if ($status === $payment->status && ! in_array($status, ['success', 'failed'], true)) {
+            return $payment->fresh();
+        }
+
+        $isTerminal = in_array($status, ['success', 'failed'], true);
+
+        $payment->update([
+            'status' => $status,
+            'selcom_reference' => $this->referenceFromPayload($statusPayload) ?? $payment->selcom_reference,
+            'selcom_resultcode' => $resultcode,
+            'selcom_result' => $statusPayload['result'] ?? $statusPayload['status'] ?? $statusPayload['payment_status'] ?? null,
+            'selcom_message' => $statusPayload['message'] ?? $statusPayload['payment_status'] ?? $statusPayload['status'] ?? null,
+            'receipt_data' => $statusPayload,
+            'completed_at' => $isTerminal ? now() : null,
+        ]);
+
+        $payment = $payment->fresh();
+
+        if ($isTerminal && ($payment->callback_url || $payment->merchant->webhook_url)) {
+            \App\Jobs\ForwardWebhookJob::dispatch($payment);
+        }
+
+        return $payment;
+    }
+
     private function logEvent(Payment $payment, string $event, string $direction, array $payload, ?string $httpStatus = null): void
     {
         PaymentLog::create([
@@ -203,6 +244,94 @@ class PaymentService
             'payload' => $payload,
             'http_status' => $httpStatus,
         ]);
+    }
+
+    private function findPaymentFromSelcomPayload(array $payload): ?Payment
+    {
+        $values = array_values(array_filter([
+            $payload['transid'] ?? null,
+            $payload['tranid'] ?? null,
+            $payload['tranID'] ?? null,
+            $payload['order_id'] ?? null,
+            $payload['utilityref'] ?? null,
+            $payload['reference'] ?? null,
+        ], fn ($value) => is_string($value) && $value !== ''));
+
+        if ($values === []) {
+            return null;
+        }
+
+        return Payment::query()
+            ->where(function ($query) use ($values): void {
+                foreach ($values as $value) {
+                    $query->orWhere('selcom_transid', $value)
+                        ->orWhere('selcom_reference', $value)
+                        ->orWhere('uuid', $value)
+                        ->orWhere('merchant_order_id', $value);
+                }
+            })
+            ->first();
+    }
+
+    private function statusPayloadFromResponse(array $response): array
+    {
+        $body = $this->selcomBody($response);
+        $data = $body['data'] ?? null;
+
+        if (is_array($data) && isset($data[0]) && is_array($data[0])) {
+            return $data[0];
+        }
+
+        if (is_array($data)) {
+            return $data;
+        }
+
+        return array_key_exists('payment_status', $body) ? $body : [];
+    }
+
+    private function resultCodeFromPayload(array $payload): string
+    {
+        if (isset($payload['resultcode'])) {
+            return (string) $payload['resultcode'];
+        }
+
+        $status = strtoupper((string) ($payload['payment_status'] ?? $payload['status'] ?? $payload['result'] ?? ''));
+
+        return match ($status) {
+            'COMPLETED', 'SUCCESS' => '000',
+            'PENDING', 'PROCESSING', 'INPROGRESS', 'IN_PROGRESS' => '111',
+            'UNKNOWN', 'AMBIGUOUS' => '999',
+            default => $status === '' ? '999' : '100',
+        };
+    }
+
+    private function statusFromPayload(array $payload, string $resultcode): string
+    {
+        $status = strtoupper((string) ($payload['payment_status'] ?? $payload['status'] ?? $payload['result'] ?? ''));
+
+        if (in_array($status, ['COMPLETED', 'SUCCESS'], true) || $resultcode === '000') {
+            return 'success';
+        }
+
+        if (in_array($status, ['FAILED', 'CANCELLED', 'CANCELED'], true)) {
+            return 'failed';
+        }
+
+        return match (true) {
+            in_array($resultcode, ['111', '927'], true) => 'inprogress',
+            $resultcode === '999' => 'ambiguous',
+            default => 'failed',
+        };
+    }
+
+    private function referenceFromPayload(array $payload): ?string
+    {
+        return $payload['reference']
+            ?? $payload['order_id']
+            ?? $payload['tranID']
+            ?? $payload['tranid']
+            ?? $payload['transid']
+            ?? null;
     }
 
     private function selcomBody(array $response): array

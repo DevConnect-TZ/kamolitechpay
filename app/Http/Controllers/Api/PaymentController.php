@@ -54,6 +54,8 @@ class PaymentController extends Controller
             ->where('merchant_id', $merchant->id)
             ->firstOrFail();
 
+        $payment = $this->paymentService->refreshFromSelcom($payment);
+
         return response()->json([
             'success' => true,
             'data' => new PaymentResource($payment),

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Merchant;
+use App\Models\Payment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -19,6 +20,7 @@ class PaymentApiTest extends TestCase
         config()->set('kamolitech.selcom.api_key', 'test-api-key');
         config()->set('kamolitech.selcom.api_secret', 'test-api-secret');
         config()->set('kamolitech.selcom.vendor_id', 'SW00193329');
+        config()->set('kamolitech.selcom.c2b_token', 'test-c2b-token');
 
         Http::fake([
             '*checkout/create-order-minimal' => Http::response([
@@ -33,6 +35,16 @@ class PaymentApiTest extends TestCase
                 'message' => 'Push sent',
                 'data' => [
                     'reference' => '0289999288',
+                ],
+            ], 200),
+            '*checkout/order-status*' => Http::response([
+                'result' => 'SUCCESS',
+                'data' => [
+                    [
+                        'order_id' => 'KML-TEST',
+                        'payment_status' => 'COMPLETED',
+                        'reference' => '0289999288',
+                    ],
                 ],
             ], 200),
         ]);
@@ -71,6 +83,7 @@ class PaymentApiTest extends TestCase
             ]);
 
         $response->assertStatus(202)
+            ->assertJsonPath('data.wallet_type', 'vodacom')
             ->assertJsonStructure([
                 'success',
                 'message',
@@ -138,7 +151,45 @@ class PaymentApiTest extends TestCase
         $this->withHeader('X-API-Key', $merchant->api_key)
             ->getJson("/api/v1/payments/{$uuid}")
             ->assertStatus(200)
-            ->assertJsonPath('data.payment_uuid', $uuid);
+            ->assertJsonPath('data.payment_uuid', $uuid)
+            ->assertJsonPath('data.status', 'success')
+            ->assertJsonMissingPath('data.selcom_reference')
+            ->assertJsonMissingPath('data.selcom_resultcode')
+            ->assertJsonMissingPath('data.selcom_message')
+            ->assertJsonMissingPath('data.receipt_data');
+    }
+
+    public function test_checkout_notification_updates_payment_status(): void
+    {
+        $merchant = Merchant::factory()->create(['is_active' => true]);
+
+        $this->withHeader('X-API-Key', $merchant->api_key)
+            ->postJson('/api/v1/payments', [
+                'msisdn' => '255765123456',
+                'amount' => 15000,
+                'merchant_order_id' => 'INV-001',
+            ])
+            ->assertAccepted();
+
+        $payment = Payment::firstOrFail();
+
+        $this->withHeader('Authorization', 'Bearer test-c2b-token')
+            ->postJson('/webhooks/selcom/notification', [
+                'order_id' => $payment->selcom_transid,
+                'reference' => '0289999288',
+                'payment_status' => 'COMPLETED',
+                'amount' => 15000,
+                'msisdn' => '255765123456',
+            ])
+            ->assertOk()
+            ->assertJsonPath('resultcode', '000');
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => 'success',
+            'selcom_reference' => '0289999288',
+            'selcom_resultcode' => '000',
+        ]);
     }
 
     public function test_webhook_rejects_invalid_bearer_token(): void

@@ -64,6 +64,7 @@
         <div class="card">
             <h2>Authentication</h2>
             <p>All requests require an <code>X-API-Key</code> header.</p>
+            <p>Responses use Kamolitech Pay fields only. Processor references, gateway result codes, and raw gateway receipts are not returned in public API responses.</p>
             <div class="label">Header</div>
             <pre>X-API-Key: kml_live_xxxxxxxxxxxxxxxxxxxxxxxx</pre>
         </div>
@@ -105,7 +106,7 @@
     "msisdn": "255765123456",
     "amount": 15000,
     "currency": "TZS",
-    "wallet_type": "VMCASHIN",
+    "wallet_type": "vodacom",
     "merchant_order_id": "INV-2026-001",
     "created_at": "2026-05-29T10:00:00Z"
   }
@@ -133,11 +134,7 @@
     "msisdn": "255765123456",
     "amount": 15000,
     "currency": "TZS",
-    "wallet_type": "VMCASHIN",
-    "selcom_reference": "0289999288",
-    "selcom_resultcode": "000",
-    "selcom_message": "Payment successful",
-    "receipt_data": { "receipt": "12344" },
+    "wallet_type": "vodacom",
     "merchant_order_id": "INV-2026-001",
     "created_at": "2026-05-29T10:00:00Z",
     "completed_at": "2026-05-29T10:02:15Z"
@@ -209,14 +206,14 @@ to          optional  End date (Y-m-d)</pre>
             <h2>Supported Wallets</h2>
             <table>
                 <thead>
-                    <tr><th>Operator</th><th>Prefixes</th><th>Code</th></tr>
+                    <tr><th>Operator</th><th>Prefixes</th><th>Wallet Type</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>Vodacom Mpesa</td><td class="prefix">0741-0747, 0754-0757, 076, 077</td><td class="code">VMCASHIN</td></tr>
-                    <tr><td>AirtelMoney</td><td class="prefix">067, 068, 069, 078, 079</td><td class="code">AMCASHIN</td></tr>
-                    <tr><td>TigoPesa</td><td class="prefix">065, 071</td><td class="code">TPCASHIN</td></tr>
-                    <tr><td>Halopesa</td><td class="prefix">061, 062</td><td class="code">HPCASHIN</td></tr>
-                    <tr><td>Zantel</td><td class="prefix">063</td><td class="code">ZPCASHIN</td></tr>
+                    <tr><td>Vodacom Mpesa</td><td class="prefix">0741-0747, 0754-0757, 076, 077</td><td class="code">vodacom</td></tr>
+                    <tr><td>AirtelMoney</td><td class="prefix">067, 068, 069, 078, 079</td><td class="code">airtel</td></tr>
+                    <tr><td>TigoPesa</td><td class="prefix">065, 071</td><td class="code">tigo</td></tr>
+                    <tr><td>Halopesa</td><td class="prefix">061, 062</td><td class="code">halopesa</td></tr>
+                    <tr><td>Zantel</td><td class="prefix">063</td><td class="code">zantel</td></tr>
                 </tbody>
             </table>
         </div>
@@ -233,9 +230,7 @@ to          optional  End date (Y-m-d)</pre>
   "amount": 15000,
   "currency": "TZS",
   "msisdn": "255765123456",
-  "wallet_type": "VMCASHIN",
-  "selcom_reference": "0289999288",
-  "receipt_data": { "receipt": "12344" },
+  "wallet_type": "vodacom",
   "completed_at": "2026-05-29T10:02:15Z"
 }</pre>
         </div>

@@ -49,8 +49,12 @@ class WebhookController extends Controller
     private function verifyToken(Request $request): bool
     {
         $header = $request->header('Authorization', '');
-        $expected = 'Bearer ' . config('kamolitech.selcom.c2b_token');
+        $token = config('kamolitech.selcom.c2b_token');
 
-        return $header === $expected;
+        if (! is_string($token) || $token === '') {
+            return false;
+        }
+
+        return hash_equals('Bearer ' . $token, $header);
     }
 }

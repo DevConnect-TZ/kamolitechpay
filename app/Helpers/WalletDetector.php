@@ -63,4 +63,16 @@ class WalletDetector
 
         return null;
     }
+
+    public static function publicName(?string $walletType): ?string
+    {
+        return match ($walletType) {
+            'VMCASHIN' => 'vodacom',
+            'AMCASHIN' => 'airtel',
+            'TPCASHIN' => 'tigo',
+            'HPCASHIN' => 'halopesa',
+            'ZPCASHIN' => 'zantel',
+            default => $walletType,
+        };
+    }
 }

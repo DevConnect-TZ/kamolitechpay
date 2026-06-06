@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\WalletDetector;
 use App\Models\Payment;
 use App\Models\PaymentLog;
 use Illuminate\Bus\Queueable;
@@ -45,9 +46,7 @@ class ForwardWebhookJob implements ShouldQueue
             'amount'           => (float) $this->payment->amount,
             'currency'         => $this->payment->currency,
             'msisdn'           => $this->payment->msisdn,
-            'wallet_type'      => $this->payment->wallet_type,
-            'selcom_reference' => $this->payment->selcom_reference,
-            'receipt_data'     => $this->payment->receipt_data,
+            'wallet_type'      => WalletDetector::publicName($this->payment->wallet_type),
             'completed_at'     => $this->payment->completed_at?->toIso8601String(),
         ];
 

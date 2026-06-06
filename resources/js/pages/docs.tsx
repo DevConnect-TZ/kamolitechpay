@@ -97,6 +97,9 @@ export default function Docs() {
                     <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '16px' }}>
                         All requests require an <code style={{ backgroundColor: '#f3f4f6', padding: '2px 6px', borderRadius: '4px', fontSize: '13px' }}>X-API-Key</code> header.
                     </p>
+                    <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '16px' }}>
+                        Responses use Kamolitech Pay fields only. Processor references, gateway result codes, and raw gateway receipts are not returned in public API responses.
+                    </p>
                     <CodeBlock
                         label="Header"
                         code={`X-API-Key: ${API_KEY}`}
@@ -148,7 +151,7 @@ export default function Docs() {
     "msisdn": "255765123456",
     "amount": 15000,
     "currency": "TZS",
-    "wallet_type": "VMCASHIN",
+    "wallet_type": "vodacom",
     "merchant_order_id": "INV-2026-001",
     "created_at": "2026-05-29T10:00:00Z"
   }
@@ -183,11 +186,7 @@ export default function Docs() {
     "msisdn": "255765123456",
     "amount": 15000,
     "currency": "TZS",
-    "wallet_type": "VMCASHIN",
-    "selcom_reference": "0289999288",
-    "selcom_resultcode": "000",
-    "selcom_message": "Payment successful",
-    "receipt_data": { "receipt": "12344" },
+    "wallet_type": "vodacom",
     "merchant_order_id": "INV-2026-001",
     "created_at": "2026-05-29T10:00:00Z",
     "completed_at": "2026-05-29T10:02:15Z"
@@ -276,34 +275,34 @@ to          optional  End date (Y-m-d)`}
                             <tr style={{ backgroundColor: '#f9fafb' }}>
                                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Operator</th>
                                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Prefixes</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Code</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Wallet Type</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr style={{ borderTop: '1px solid #f3f4f6' }}>
                                 <td style={{ padding: '12px 16px' }}>Vodacom Mpesa</td>
                                 <td style={{ padding: '12px 16px', color: '#6b7280' }}>0741-0747, 0754-0757, 076, 077</td>
-                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>VMCASHIN</td>
+                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>vodacom</td>
                             </tr>
                             <tr style={{ borderTop: '1px solid #f3f4f6' }}>
                                 <td style={{ padding: '12px 16px' }}>AirtelMoney</td>
                                 <td style={{ padding: '12px 16px', color: '#6b7280' }}>067, 068, 069, 078, 079</td>
-                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>AMCASHIN</td>
+                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>airtel</td>
                             </tr>
                             <tr style={{ borderTop: '1px solid #f3f4f6' }}>
                                 <td style={{ padding: '12px 16px' }}>TigoPesa</td>
                                 <td style={{ padding: '12px 16px', color: '#6b7280' }}>065, 071</td>
-                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>TPCASHIN</td>
+                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>tigo</td>
                             </tr>
                             <tr style={{ borderTop: '1px solid #f3f4f6' }}>
                                 <td style={{ padding: '12px 16px' }}>Halopesa</td>
                                 <td style={{ padding: '12px 16px', color: '#6b7280' }}>061, 062</td>
-                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>HPCASHIN</td>
+                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>halopesa</td>
                             </tr>
                             <tr style={{ borderTop: '1px solid #f3f4f6' }}>
                                 <td style={{ padding: '12px 16px' }}>Zantel</td>
                                 <td style={{ padding: '12px 16px', color: '#6b7280' }}>063</td>
-                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>ZPCASHIN</td>
+                                <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: '12px', color: '#6b7280' }}>zantel</td>
                             </tr>
                         </tbody>
                     </table>
@@ -325,9 +324,7 @@ to          optional  End date (Y-m-d)`}
   "amount": 15000,
   "currency": "TZS",
   "msisdn": "255765123456",
-  "wallet_type": "VMCASHIN",
-  "selcom_reference": "0289999288",
-  "receipt_data": { "receipt": "12344" },
+  "wallet_type": "vodacom",
   "completed_at": "2026-05-29T10:02:15Z"
 }`}
                     />
