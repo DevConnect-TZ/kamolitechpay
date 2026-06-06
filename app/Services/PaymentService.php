@@ -27,7 +27,7 @@ class PaymentService
             'uuid' => 'kml-pay-' . Str::random(12),
             'merchant_id' => $merchant->id,
             'merchant_order_id' => $data['merchant_order_id'] ?? null,
-            'selcom_transid' => (string) Str::uuid(),
+            'selcom_transid' => SelcomGatewayService::generateOrderId('KML'),
             'msisdn' => $msisdn,
             'amount' => $data['amount'],
             'currency' => 'TZS',
@@ -36,36 +36,74 @@ class PaymentService
             'callback_url' => $data['callback_url'] ?? null,
         ]);
 
-        $this->logEvent($payment, 'pushussd_request', 'outgoing', [
-            'transid' => $payment->selcom_transid,
-            'utilityref' => $payment->merchant_order_id ?? $payment->uuid,
-            'amount' => $payment->amount,
-            'msisdn' => $payment->msisdn,
-        ]);
+        $buyerName = (string) ($data['customer_name'] ?? $merchant->name);
+        $buyerEmail = (string) ($data['customer_email'] ?? $merchant->email);
 
-        $response = $this->selcom->pushUssd(
+        $createOrderPayload = $this->selcom->createOrderPayload(
             $payment->selcom_transid,
-            $payment->merchant_order_id ?? $payment->uuid,
             (float) $payment->amount,
+            $buyerName,
+            $buyerEmail,
             $payment->msisdn
         );
 
-        $this->logEvent($payment, 'pushussd_response', 'incoming', $response, $response['resultcode'] ?? null);
+        $this->logEvent($payment, 'create_order_request', 'outgoing', $createOrderPayload);
 
-        if (($response['resultcode'] ?? '') === '000') {
+        $createOrderResponse = $this->selcom->createOrderMinimal(
+            $payment->selcom_transid,
+            (float) $payment->amount,
+            $buyerName,
+            $buyerEmail,
+            $payment->msisdn
+        );
+
+        $this->logEvent(
+            $payment,
+            'create_order_response',
+            'incoming',
+            $createOrderResponse,
+            (string) ($createOrderResponse['http_status'] ?? $createOrderResponse['status'] ?? '')
+        );
+
+        if (! $this->selcom->isSuccessful($createOrderResponse)) {
+            $payment->update([
+                'status' => 'failed',
+                'selcom_resultcode' => $this->selcomResultCode($createOrderResponse),
+                'selcom_result' => $this->selcomResult($createOrderResponse),
+                'selcom_message' => $this->selcomMessage($createOrderResponse, 'Failed to create Selcom checkout order'),
+            ]);
+
+            return $payment->fresh();
+        }
+
+        $walletPayload = $this->selcom->walletPaymentPayload($payment->selcom_transid, $payment->msisdn);
+
+        $this->logEvent($payment, 'pushussd_request', 'outgoing', $walletPayload);
+
+        $walletResponse = $this->selcom->walletPayment($payment->selcom_transid, $payment->msisdn);
+
+        $this->logEvent(
+            $payment,
+            'pushussd_response',
+            'incoming',
+            $walletResponse,
+            (string) ($walletResponse['http_status'] ?? $walletResponse['status'] ?? '')
+        );
+
+        if ($this->selcom->isSuccessful($walletResponse)) {
             $payment->update([
                 'status' => 'push_sent',
-                'selcom_reference' => $response['reference'] ?? null,
-                'selcom_resultcode' => $response['resultcode'],
-                'selcom_result' => $response['result'] ?? null,
-                'selcom_message' => $response['message'] ?? null,
+                'selcom_reference' => $this->selcomReference($walletResponse) ?? $payment->selcom_transid,
+                'selcom_resultcode' => $this->selcomResultCode($walletResponse, '000'),
+                'selcom_result' => $this->selcomResult($walletResponse, 'SUCCESS'),
+                'selcom_message' => $this->selcomMessage($walletResponse, 'USSD push initiated'),
             ]);
         } else {
             $payment->update([
                 'status' => 'failed',
-                'selcom_resultcode' => $response['resultcode'] ?? null,
-                'selcom_result' => $response['result'] ?? null,
-                'selcom_message' => $response['message'] ?? null,
+                'selcom_resultcode' => $this->selcomResultCode($walletResponse),
+                'selcom_result' => $this->selcomResult($walletResponse),
+                'selcom_message' => $this->selcomMessage($walletResponse, 'Failed to trigger Selcom USSD push'),
             ]);
         }
 
@@ -165,5 +203,42 @@ class PaymentService
             'payload' => $payload,
             'http_status' => $httpStatus,
         ]);
+    }
+
+    private function selcomBody(array $response): array
+    {
+        $body = $response['response'] ?? [];
+
+        return is_array($body) ? $body : ['message' => (string) $body];
+    }
+
+    private function selcomResultCode(array $response, ?string $default = null): ?string
+    {
+        $body = $this->selcomBody($response);
+
+        return isset($body['resultcode']) ? (string) $body['resultcode'] : $default;
+    }
+
+    private function selcomResult(array $response, ?string $default = null): ?string
+    {
+        $body = $this->selcomBody($response);
+
+        return isset($body['result'])
+            ? (string) $body['result']
+            : (isset($body['status']) ? (string) $body['status'] : $default);
+    }
+
+    private function selcomMessage(array $response, string $default): string
+    {
+        $body = $this->selcomBody($response);
+
+        return (string) ($body['message'] ?? $default);
+    }
+
+    private function selcomReference(array $response): ?string
+    {
+        $body = $this->selcomBody($response);
+
+        return $body['reference'] ?? $body['data']['reference'] ?? $body['data']['order_id'] ?? null;
     }
 }

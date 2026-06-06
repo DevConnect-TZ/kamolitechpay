@@ -4,11 +4,39 @@ namespace Tests\Feature\Api;
 
 use App\Models\Merchant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PaymentApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('kamolitech.selcom.base_url', 'https://apigw.selcommobile.com/v1');
+        config()->set('kamolitech.selcom.api_key', 'test-api-key');
+        config()->set('kamolitech.selcom.api_secret', 'test-api-secret');
+        config()->set('kamolitech.selcom.vendor_id', 'SW00193329');
+
+        Http::fake([
+            '*checkout/create-order-minimal' => Http::response([
+                'result' => 'SUCCESS',
+                'message' => 'Order created',
+                'data' => [
+                    'order_id' => 'KML-TEST',
+                ],
+            ], 200),
+            '*checkout/wallet-payment' => Http::response([
+                'result' => 'SUCCESS',
+                'message' => 'Push sent',
+                'data' => [
+                    'reference' => '0289999288',
+                ],
+            ], 200),
+        ]);
+    }
 
     public function test_returns_401_without_api_key(): void
     {
@@ -63,7 +91,20 @@ class PaymentApiTest extends TestCase
             'merchant_order_id' => 'INV-001',
             'msisdn' => '255765123456',
             'amount' => 15000,
+            'status' => 'push_sent',
         ]);
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/checkout/create-order-minimal')
+            && $request['vendor'] === 'SW00193329'
+            && $request['amount'] === 15000
+            && $request->hasHeader('Signed-Fields', 'vendor,order_id,buyer_email,buyer_name,buyer_phone,amount,currency,no_of_items'));
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/checkout/wallet-payment')
+            && $request['transid'] === $request['order_id']
+            && $request['msisdn'] === '255765123456'
+            && ! array_key_exists('pin', $request->data())
+            && ! array_key_exists('utilityref', $request->data())
+            && $request->hasHeader('Signed-Fields', 'transid,order_id,msisdn'));
     }
 
     public function test_returns_422_for_unsupported_msisdn(): void
