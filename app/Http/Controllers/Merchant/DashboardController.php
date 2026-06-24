@@ -28,7 +28,7 @@ class DashboardController extends Controller
         return Inertia::render('merchant/dashboard', [
             'stats' => [
                 'total_payments' => $paymentsQuery->clone()->count(),
-                'total_amount' => $paymentsQuery->clone()->whereIn('status', ['push_sent', 'inprogress', 'success'])->sum('amount'),
+                'total_amount' => $paymentsQuery->clone()->where('status', 'success')->sum('amount'),
                 'successful_payments' => $paymentsQuery->clone()->where('status', 'success')->count(),
                 'pending_payments' => $paymentsQuery->clone()->whereIn('status', ['pending', 'push_sent', 'inprogress'])->count(),
                 'failed_payments' => $paymentsQuery->clone()->where('status', 'failed')->count(),

@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid, CreditCard, Users, Key, FileText } from 'lucide-react';
+import { LayoutGrid, CreditCard, Users, Key, FileText, Banknote, ListCollapse, Settings } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -36,12 +36,32 @@ export function AppSidebar() {
                 href: '/merchants',
                 icon: Users,
             },
+            {
+                title: 'Withdrawals',
+                href: '/withdrawals',
+                icon: Banknote,
+            },
+            {
+                title: 'Global Settings',
+                href: '/global-settings',
+                icon: Settings,
+            },
         ]
         : [
             {
                 title: 'Dashboard',
                 href: '/merchant',
                 icon: LayoutGrid,
+            },
+            {
+                title: 'Transactions',
+                href: '/merchant/transactions',
+                icon: ListCollapse,
+            },
+            {
+                title: 'Withdrawals',
+                href: '/merchant/withdrawals',
+                icon: Banknote,
             },
             {
                 title: 'API Docs',
