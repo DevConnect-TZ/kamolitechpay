@@ -20,6 +20,8 @@ class Merchant extends Model
         'webhook_url',
         'is_active',
         'is_test_mode',
+        'theme_color',
+        'logo_url',
     ];
 
     protected function casts(): array
