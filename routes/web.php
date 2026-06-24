@@ -28,6 +28,13 @@ Route::middleware(['auth', 'verified', 'merchant'])->group(function () {
     Route::get('merchant/transactions', [\App\Http\Controllers\Merchant\TransactionController::class, 'index'])->name('merchant.transactions');
     Route::get('merchant/withdrawals', [\App\Http\Controllers\Merchant\WithdrawalController::class, 'index'])->name('merchant.withdrawals.index');
     Route::post('merchant/withdrawals', [\App\Http\Controllers\Merchant\WithdrawalController::class, 'store'])->name('merchant.withdrawals.store');
+    Route::get('merchant/payment-links', [\App\Http\Controllers\Merchant\PaymentLinkController::class, 'index'])->name('merchant.payment-links.index');
+    Route::post('merchant/payment-links', [\App\Http\Controllers\Merchant\PaymentLinkController::class, 'store'])->name('merchant.payment-links.store');
+    Route::delete('merchant/payment-links/{id}', [\App\Http\Controllers\Merchant\PaymentLinkController::class, 'destroy'])->name('merchant.payment-links.destroy');
 });
+
+// Public payment link route
+Route::get('pay/{uuid}', [\App\Http\Controllers\PaymentLinkViewerController::class, 'show'])->name('pay.show');
+Route::post('pay/{uuid}', [\App\Http\Controllers\PaymentLinkViewerController::class, 'process'])->name('pay.process');
 
 require __DIR__.'/settings.php';

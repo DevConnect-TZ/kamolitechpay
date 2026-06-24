@@ -44,4 +44,9 @@ class Merchant extends Model
     {
         return $this->hasMany(WithdrawalRequest::class);
     }
+
+    public function paymentLinks()
+    {
+        return $this->hasMany(PaymentLink::class);
+    }
 }
