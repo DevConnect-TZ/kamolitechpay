@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid, CreditCard, Users, Key, FileText, Banknote, ListCollapse, Settings, Link as LinkIcon } from 'lucide-react';
+import { LayoutGrid, CreditCard, Users, Key, FileText, Banknote, ListCollapse, Settings, Link as LinkIcon, Palette } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -67,6 +67,11 @@ export function AppSidebar() {
                 title: 'Payment Links',
                 href: '/merchant/payment-links',
                 icon: LinkIcon,
+            },
+            {
+                title: 'Brand Settings',
+                href: '/merchant/brand',
+                icon: Palette,
             },
             {
                 title: 'API Docs',

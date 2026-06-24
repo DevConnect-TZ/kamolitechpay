@@ -31,10 +31,13 @@ Route::middleware(['auth', 'verified', 'merchant'])->group(function () {
     Route::get('merchant/payment-links', [\App\Http\Controllers\Merchant\PaymentLinkController::class, 'index'])->name('merchant.payment-links.index');
     Route::post('merchant/payment-links', [\App\Http\Controllers\Merchant\PaymentLinkController::class, 'store'])->name('merchant.payment-links.store');
     Route::delete('merchant/payment-links/{id}', [\App\Http\Controllers\Merchant\PaymentLinkController::class, 'destroy'])->name('merchant.payment-links.destroy');
+    Route::get('merchant/brand', [\App\Http\Controllers\Merchant\BrandController::class, 'index'])->name('merchant.brand.index');
+    Route::post('merchant/brand', [\App\Http\Controllers\Merchant\BrandController::class, 'update'])->name('merchant.brand.update');
 });
 
 // Public payment link route
 Route::get('pay/{uuid}', [\App\Http\Controllers\PaymentLinkViewerController::class, 'show'])->name('pay.show');
 Route::post('pay/{uuid}', [\App\Http\Controllers\PaymentLinkViewerController::class, 'process'])->name('pay.process');
+Route::get('pay/status/{payment_uuid}', [\App\Http\Controllers\PaymentLinkViewerController::class, 'status'])->name('pay.status');
 
 require __DIR__.'/settings.php';

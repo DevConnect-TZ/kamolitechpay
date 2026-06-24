@@ -25,6 +25,8 @@ class PaymentLinkViewerController extends Controller
                 'amount' => $link->amount ? (float) $link->amount : null,
                 'msisdn' => $link->msisdn,
                 'merchant_name' => $link->merchant->name,
+                'theme_color' => $link->merchant->theme_color ?? '#4f46e5',
+                'logo_url' => $link->merchant->logo_url ? \Illuminate\Support\Facades\Storage::url($link->merchant->logo_url) : null,
             ],
         ]);
     }
@@ -59,11 +61,20 @@ class PaymentLinkViewerController extends Controller
             $payment = $paymentService->initiate($link->merchant, $data);
             
             return back()->with([
-                'success' => 'Payment initiated successfully! Please check your phone to confirm the USSD push.',
+                'success' => 'Payment initiated successfully!',
                 'payment_uuid' => $payment->uuid,
             ]);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
+    }
+
+    public function status(string $payment_uuid)
+    {
+        $payment = \App\Models\Payment::where('uuid', $payment_uuid)->firstOrFail();
+        return response()->json([
+            'status' => $payment->status,
+            'message' => $payment->selcom_message,
+        ]);
     }
 }
